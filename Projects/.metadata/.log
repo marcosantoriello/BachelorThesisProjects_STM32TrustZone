@@ -1,0 +1,24 @@
+!SESSION 2024-05-29 22:01:05.794 -----------------------------------------------
+eclipse.buildId=Version 1.15.1
+java.version=17.0.8.1
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2024-05-29 22:01:25.378
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-05-29 22:01:25.379
+!MESSAGE Log4j2 initialized with config file /home/marcus/Desktop/Tesi-STM32-TrustZone/Projects/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-05-29 22:01:28.185
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2024-05-29 22:07:05.900
+!MESSAGE Indexed 'hello_world' (37 sources, 101 headers) in 3.53 sec: 12,479 declarations; 84,721 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0021%)
+
+!ENTRY com.st.stm32cube.ide.mcu.debug.launch 2 0 2024-05-29 22:15:42.438
+!MESSAGE Won't launch debug session since we failed to locate the binary.
+
+!ENTRY com.st.stm32cube.ide.mcu.debug.launch 2 0 2024-05-29 22:18:56.959
+!MESSAGE Won't launch debug session since we failed to locate the binary.
