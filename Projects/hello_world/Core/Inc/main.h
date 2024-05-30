@@ -90,8 +90,6 @@ void Error_Handler(void);
 #define USB_OTG_FS_DP_GPIO_Port GPIOA
 #define UCPD1_CC1_Pin GPIO_PIN_15
 #define UCPD1_CC1_GPIO_Port GPIOA
-#define UCPD_DBn_Pin GPIO_PIN_5
-#define UCPD_DBn_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
