@@ -1,0 +1,2 @@
+../Core/Src/secure_nsc.c:50:20:SECURE_RegisterCallback	16	static
+../Core/Src/secure_nsc.c:69:20:Toggle_Pin	8	static

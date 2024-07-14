@@ -1,0 +1,10 @@
+21:25:19 **** Incremental Build of configuration Debug for project FirstTrustZoneGPIOApp_Secure ****
+make -j12 all 
+arm-none-eabi-size  FirstTrustZoneGPIOApp_Secure.elf 
+   text	   data	    bss	    dec	    hex	filename
+  33948	      9	   3116	  37073	   90d1	FirstTrustZoneGPIOApp_Secure.elf
+Finished building: default.size.stdout
+ 
+
+21:25:20 Build Finished. 0 errors, 0 warnings. (took 459ms)
+
