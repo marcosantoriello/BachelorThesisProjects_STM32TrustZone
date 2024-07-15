@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">&#x0A;<refactoring comment="Delete 3 resources" deleteContents="true" description="Delete 3 resources" element1="/GPIO_IOToggle_TrustZone" element2="/GPIO_IOToggle_TrustZone_NonSecure" element3="/GPIO_IOToggle_TrustZone_Secure" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="3" stamp="1720979438346"/>&#x0A;<refactoring comment="Delete resource &apos;FirstTrustZoneGPIOApplication&apos;" deleteContents="true" description="Delete resource &apos;FirstTrustZoneGPIOApplication&apos;" element1="/FirstTrustZoneGPIOApplication" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1720980408910"/>
-</session>
