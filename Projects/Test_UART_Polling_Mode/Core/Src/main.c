@@ -47,13 +47,9 @@ UART_HandleTypeDef huart1;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-// Defining a buffer; note that tx is an abbreviation for transmit
-uint8_t tx_buffer[27] = "Hello World!\n\r";
-uint8_t rx_index;
-uint8_t rx_data[6];
-uint8_t rx_buffer[100];
-uint8_t transfer_complete;
-
+uint8_t rx_buffer[1];
+int counter = 0;
+char input_buffer[50];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +67,14 @@ static void MX_USB_OTG_FS_PCD_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+	  HAL_UART_Transmit(&huart1, rx_buffer, sizeof(rx_buffer), 10);
+	  counter++; // you can check the value in the debugger...
+	  HAL_UART_Receive_IT(&huart1, rx_buffer, 1);
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -112,9 +115,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer)); // IT stands for interrupt
-
+  HAL_UART_Receive_IT(&huart1, rx_buffer, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -124,11 +125,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	 OLD VERSION
-//	  HAL_UART_Transmit(&huart1, tx_buffer, sizeof(tx_buffer), 10);
-//	  HAL_Delay(1000);
-
-
   }
   /* USER CODE END 3 */
 }
@@ -483,19 +479,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-// This function has been copied from Drivers->STM32U5xx_HAL_Driver->Src->stm32u5xx_hal_uart.c
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-
-  /* NOTE : This function should not be modified, when the callback is needed,
-            the HAL_UART_RxCpltCallback can be implemented in the user file.
-   */
-
-  // This line of code just transmits back to the PC the data that it has just sent
-  HAL_UART_Transmit(&huart1, rx_data, sizeof(rx_data), 10);
-}
 
 /* USER CODE END 4 */
 
