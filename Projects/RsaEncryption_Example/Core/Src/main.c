@@ -24,6 +24,7 @@
 #include "wolfssl/wolfcrypt/rsa.h"
 #include "wolfssl/wolfcrypt/random.h"
 #include "wolfssl/wolfcrypt/error-crypt.h"
+#include "wolfssl/options.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -76,10 +77,45 @@ static void MX_RNG_Init(void);
 void send_message(const char *msg);
 int init_rng();
 int generate_rsa_key();
+int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
+	int ret;
+	RsaKey publicKey;
+	word32 idx = 0;
+
+	/* INITIALIZING RSA PUBLIC KEY */
+	wc_InitRsaKey(&publicKey, NULL);
+
+	/* DECODING PUBLIC KEY */
+	ret = wc_RsaPublicKeyDecode(publicKeyDer, &idx, &publicKey, publicKeyDerSz);
+	if (ret != 0) {
+		send_message("There was an error in decoding Rsa Public Key\r\n");
+		return ret;
+	} else {
+		send_message("Rsa Key successfully decoded\r\n");
+	}
+
+	/* ENCRYPTING DATA */
+	ret = wc_RsaPublicEncrypt(input, inputSz, output, *outputSz, &publicKey, &rng);
+	if (ret < 0) {
+		send_message("There was an error in encrypting the plaintext\r\n");
+		return ret;
+	} else {
+		send_message("Plaintext has been successfully encrypted\r\n");
+	}
+
+	*outputSz = ret;
+
+	/* RELASING RESOURCES */
+	wc_FreeRsaKey(&publicKey);
+
+	return ret;
+}
+
 int generate_rsa_key() {
 	int ret;
 	long e = 65537;
@@ -148,7 +184,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-int ret;
+  int ret;
+  byte plaintext[] = "Test encryption data";
+  byte encrypted[256];
+  word32 encryptedSz = sizeof(encrypted);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -191,6 +230,13 @@ int ret;
   /* GENERATING RSA KEY */
   send_message("Generating RSA Key...\r\n");
   generate_rsa_key();
+
+  /* ENCRYPTING */
+  ret = rsa_encrypt(plaintext, sizeof(plaintext), encrypted, &encryptedSz);
+  if (ret < 0) {
+	  send_message("There was an error in encrypting the plaintext\r\n");
+	  return ret;
+  }
 
 
 
