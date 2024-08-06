@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "wolfssl/options.h"
 #include "wolfssl/wolfcrypt/rsa.h"
 #include "wolfssl/wolfcrypt/random.h"
 #include "wolfssl/wolfcrypt/error-crypt.h"
-#include "wolfssl/options.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -78,6 +78,7 @@ void send_message(const char *msg);
 int init_rng();
 int generate_rsa_key();
 int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
+int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -96,10 +97,11 @@ int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
 		send_message("There was an error in decoding Rsa Public Key\r\n");
 		return ret;
 	} else {
-		send_message("Rsa Key successfully decoded\r\n");
+		send_message("Rsa Public Key successfully decoded\r\n");
 	}
 
 	/* ENCRYPTING DATA */
+
 	ret = wc_RsaPublicEncrypt(input, inputSz, output, *outputSz, &publicKey, &rng);
 	if (ret < 0) {
 		send_message("There was an error in encrypting the plaintext\r\n");
@@ -112,6 +114,42 @@ int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
 
 	/* RELASING RESOURCES */
 	wc_FreeRsaKey(&publicKey);
+
+	return ret;
+}
+
+int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
+	int ret;
+	RsaKey privateKey;
+	word32 idx = 0;
+
+	/* INITIALIZING RSA PRIVATE KEY */
+	wc_InitRsaKey(&privateKey, NULL);
+
+	/* DECODING PUBLIC KEY */
+	ret = wc_RsaPrivateKeyDecode(privateKeyDer, &idx, &privateKey, privateKeyDerSz);
+	if (ret != 0) {
+			send_message("There was an error in decoding Rsa Private Key\r\n");
+			return ret;
+	} else {
+			send_message("Rsa Private Key successfully decoded\r\n");
+	}
+
+
+
+	/* DECRYPTING DATA */
+	wc_RsaSetRNG(&privateKey, &rng);
+	ret = wc_RsaPrivateDecrypt(input, inputSz, output, *outputSz, &privateKey);
+	if (ret < 0) {
+		send_message("There was an error in decrypting the ciphertext\r\n");
+		return ret;
+	} else {
+		send_message("Ciphertext has been successfully decrypted\r\n");
+	}
+
+	*outputSz = ret;
+	/* RELASING RESOURCES */
+	wc_FreeRsaKey(&privateKey);
 
 	return ret;
 }
@@ -188,6 +226,8 @@ int main(void)
   byte plaintext[] = "Test encryption data";
   byte encrypted[256];
   word32 encryptedSz = sizeof(encrypted);
+  byte decrypted[256];
+  word32 decryptedSz = sizeof(decrypted);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -236,8 +276,19 @@ int main(void)
   if (ret < 0) {
 	  send_message("There was an error in encrypting the plaintext\r\n");
 	  return ret;
+  } else {
+	  send_message("Successfully encrypted your text!\r\n");
   }
 
+  /* DECRYPTING */
+  ret = rsa_decrypt(encrypted, encryptedSz, decrypted, &decryptedSz);
+//  if (ret == 0) {
+//	  decrypted[decryptedSz] = "\0";
+//
+//	  send_message("Here is your decrypted text:");
+//	  send_message((const char *)decrypted);
+//	  send_message("\r\n");
+//  }
 
 
   /* USER CODE END 2 */
