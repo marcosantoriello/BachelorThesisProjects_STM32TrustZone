@@ -61,7 +61,8 @@ typedef enum
 /* Exported functions ------------------------------------------------------- */
 void SECURE_RegisterCallback(SECURE_CallbackIDTypeDef CallbackId, void *func);
 void SECURE_get_rsa_pk(byte *out_public_key);
-void SECURE_rsa_encrypt(byte *plaintext, byte *out_ciphertext, word32 out_ciphertext_size);
+void SECURE_rsa_encrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz);
+void SECURE_rsa_decrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 #endif /* SECURE_NSC_H */
 /* USER CODE END Non_Secure_CallLib_h */
 

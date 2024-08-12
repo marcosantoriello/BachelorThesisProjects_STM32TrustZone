@@ -79,8 +79,12 @@ CMSE_NS_ENTRY void SECURE_get_rsa_pk(byte *out_public_key) {
 	memcpy(out_public_key, publicKeyDer, 4096);
 }
 
-CMSE_NS_ENTRY void SECURE_rsa_encrypt(byte *plaintext, byte *out_ciphertext, word32 out_ciphertext_size) {
-	rsa_encrypt(plaintext, sizeof(plaintext), out_ciphertext, &out_ciphertext_size);
+CMSE_NS_ENTRY void SECURE_rsa_encrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz) {
+	rsa_encrypt(input, inputSz, output, outputSz);
+}
+
+CMSE_NS_ENTRY void SECURE_rsa_decrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz) {
+	rsa_decrypt(input, inputSz, output, outputSz);
 }
 
 /**

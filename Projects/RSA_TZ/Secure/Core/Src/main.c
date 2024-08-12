@@ -130,22 +130,16 @@ int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
 	/* DECODING PUBLIC KEY */
 	ret = wc_RsaPrivateKeyDecode(privateKeyDer, &idx, &privateKey, privateKeyDerSz);
 	if (ret != 0) {
-			send_message("There was an error in decoding Rsa Private Key\r\n");
+//			send_message("There was an error in decoding Rsa Private Key\r\n");
 			return ret;
-	} else {
-			send_message("Rsa Private Key successfully decoded\r\n");
 	}
-
-
 
 	/* DECRYPTING DATA */
 	wc_RsaSetRNG(&privateKey, &rng);
 	ret = wc_RsaPrivateDecrypt(input, inputSz, output, *outputSz, &privateKey);
 	if (ret < 0) {
-		send_message("There was an error in decrypting the ciphertext\r\n");
+//		send_message("There was an error in decrypting the ciphertext\r\n");
 		return ret;
-	} else {
-		send_message("Ciphertext has been successfully decrypted\r\n");
 	}
 
 	*outputSz = ret;

@@ -51,7 +51,6 @@ uint8_t input_index = 0;
 byte publicKeyDer[4096];
 int encrypt = 0;
 int decrypt = 0;
-byte plaintext[256];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -164,21 +163,30 @@ int main(void)
   send_message("Type Decrypt to decrypt a message.\r\n");
   send_message("Type PubKey to get the public key.\r\n");
 
-  /* --- TESTING RSA ENCRYPTION--- */
+  /* --- TESTING RSA ENCRYPTION --- */
+  byte plaintext[] = "Test encryption data";
+  byte encrypted[256];
+  word32 encryptedSz = sizeof(encrypted);
 
-  byte ciphertext[256];
-  char *to_encrypt = "Testing RSA TZ encryption";
-  word32 out_ciphertext_size = sizeof(ciphertext);
-  SECURE_rsa_encrypt((byte *)to_encrypt, ciphertext, out_ciphertext_size);
+
+  SECURE_rsa_encrypt(plaintext, sizeof(plaintext), encrypted, &encryptedSz);
   send_message("Ciphertext:\r\n");
-  for (size_t i = 0; i < sizeof(ciphertext); i++) {
+  for (size_t i = 0; i < sizeof(encrypted); i++) {
   	  // sending as printable characters
   	  char hex_str[3];
-  	  sprintf(hex_str, "%02X", ciphertext[i]);
+  	  sprintf(hex_str, "%02X", encrypted[i]);
   	  send_message(hex_str);
    }
+  send_message("\r\n");
 
-  /* --- TESTING RSA ENCRYPTION--- */
+  /* --- TESTING RSA DECRYPTION --- */
+  byte decrypted[256];
+  word32 decryptedSz = sizeof(decrypted);
+  SECURE_rsa_decrypt(encrypted, encryptedSz, decrypted, &decryptedSz);
+  send_message("Plaintext:\r\n");
+
+  send_message((char *) decrypted);
+  send_message("\r\n");
 
   /* USER CODE END 2 */
 
