@@ -204,6 +204,10 @@ int init_rng() {
 	return to_return;
 }
 
+void b64_encode(byte *in, byte *out, word32 outLen) {
+	Base64_Encode(in, sizeof(in), out, &outLen);
+}
+
 /* USER CODE END 0 */
 
 /**

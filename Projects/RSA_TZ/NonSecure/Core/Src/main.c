@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +52,17 @@ uint8_t input_index = 0;
 byte publicKeyDer[4096];
 int encrypt = 0;
 int decrypt = 0;
+
+byte encrypted[256];
+word32 encryptedSz = sizeof(encrypted);
+byte decrypted[256];
+word32 decryptedSz = sizeof(decrypted);
+
+char b64_encrypted[350];
+word32 b64_encryptedSz = sizeof(b64_encrypted);
+char b64_decrypted[350];
+word32 b64_decryptedSz = sizeof(b64_decrypted);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,54 +73,71 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE END PFP */
 void send_message(const char *msg);
 void process_command(const char *buffer);
+int hexCharToInt(char c);
+void hexStringToByteArray(const char* hexString, byte *byteArray, size_t byteArraySize);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
 
 /* --- UART FUNCTIONS --- */
-//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//  if (huart->Instance == USART1) {
-//	  if (rx_buffer[0] =='\r') {
-//		  input_buffer[input_index] = '\0';
-//		  process_command((char *)input_buffer);
-//
-//		  // Resetting input buffer...
-//		  memset(input_buffer, 0, sizeof(input_buffer));
-//		  input_index = 0;
-//	  } else {
-//		  input_buffer[input_index++] = rx_buffer[0];
-//	  }
-//	  HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
-//  }
-//}
-//
-//void process_command(const char *buffer) {
-//	char *msg;
-//	if (strcmp(buffer, "Encrypt") == 0) {
-//		encrypt = 1;
-//		send_message("Insert the text to encrypt:\r\n");
-//	} else if (strcmp(buffer, "Decrypt") == 0) {
-//		decrypt = 1;
-//		send_message("Insert the text to decrypt:\r\n");
-//	} else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
-//			&& encrypt == 1) {
-//		SECURE_rsa_encrypt((byte *)buffer, ciphertext);
-//		encrypt = 0;
-//		send_message("Successfully encrypted your data!\r\nCiphertext:\r\n");
-//	}
-//
-//	else {
-//		msg ="Command unknown\n\r";
-//		encrypt = 0;
-//		decrypt = 0;
-//		HAL_UART_Transmit_IT(&huart1, (uint8_t *)msg, strlen(msg));
-//	}
-//}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+	  if (rx_buffer[0] =='\r') {
+		  input_buffer[input_index] = '\0';
+		  process_command((char *)input_buffer);
+
+		  // Resetting input buffer...
+		  memset(input_buffer, 0, sizeof(input_buffer));
+		  input_index = 0;
+	  } else {
+		  input_buffer[input_index++] = rx_buffer[0];
+	  }
+	  HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
+  }
+}
+
+void process_command(const char *buffer) {
+	char *msg;
+	if (strcmp(buffer, "Encrypt") == 0) {
+		encrypt = 1;
+		send_message("Insert the text to encrypt:\r\n");
+	} else if (strcmp(buffer, "Decrypt") == 0) {
+		decrypt = 1;
+		send_message("Insert the text to decrypt:\r\n");
+	} /* --- RSA ENCRYPTION --- */
+	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
+			&& encrypt == 1) {
+		memset(encrypted, 0, sizeof(encrypted)); // resetting enc buffer before encrypting
+		SECURE_rsa_encrypt((byte *)buffer, sizeof(buffer), encrypted, &encryptedSz);
+		encrypt = 0;
+		send_message("Successfully encrypted your data!\r\nCiphertext:\r\n");
+		for (size_t i = 0; i < sizeof(encrypted); i++) {
+		  	char hex_str[3];
+		  	sprintf(hex_str, "%02X", encrypted[i]);
+		  	send_message(hex_str);
+		}
+		send_message("\r\n");
+	} /* --- RSA DECRYPTION --- */
+	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
+			&& decrypt == 1) {
+		memset(decrypted, 0, sizeof(decrypted)); // resetting dec buffer before encrypting
+		SECURE_rsa_decrypt((byte *)buffer, sizeof(buffer), decrypted, &decryptedSz);
+		send_message("Decrypted text:\r\n");
+		send_message((char *) decrypted);
+	}
+	else {
+		msg ="Command unknown\n\r";
+		encrypt = 0;
+		decrypt = 0;
+		HAL_UART_Transmit_IT(&huart1, (uint8_t *)msg, strlen(msg));
+	}
+}
 
 void send_message(const char *msg) {
 	HAL_UART_Transmit(&huart1, (uint8_t *) msg, strlen(msg), HAL_MAX_DELAY);
 }
+
 
 
 /* USER CODE END 0 */
@@ -141,7 +170,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
   send_message("Welcome to RSA TZ!\r\n");
 
@@ -159,34 +188,35 @@ int main(void)
   }
   send_message("\r\n");
 
-  send_message("Type Encrypt to encrypt a message.\r\n");
-  send_message("Type Decrypt to decrypt a message.\r\n");
-  send_message("Type PubKey to get the public key.\r\n");
-
-  /* --- TESTING RSA ENCRYPTION --- */
-  byte plaintext[] = "Test encryption data";
-  byte encrypted[256];
-  word32 encryptedSz = sizeof(encrypted);
+  send_message("Type Encrypt to encrypt a message.\r\nType Decrypt to decrypt a message.\r\nType PubKey to get the public key.\r\n");
 
 
-  SECURE_rsa_encrypt(plaintext, sizeof(plaintext), encrypted, &encryptedSz);
-  send_message("Ciphertext:\r\n");
-  for (size_t i = 0; i < sizeof(encrypted); i++) {
-  	  // sending as printable characters
-  	  char hex_str[3];
-  	  sprintf(hex_str, "%02X", encrypted[i]);
-  	  send_message(hex_str);
-   }
-  send_message("\r\n");
 
-  /* --- TESTING RSA DECRYPTION --- */
-  byte decrypted[256];
-  word32 decryptedSz = sizeof(decrypted);
-  SECURE_rsa_decrypt(encrypted, encryptedSz, decrypted, &decryptedSz);
-  send_message("Plaintext:\r\n");
 
-  send_message((char *) decrypted);
-  send_message("\r\n");
+//  /* --- TESTING RSA ENCRYPTION --- */
+//  byte plaintext[] = "Test encryption data";
+//  byte encrypted[256];
+//  word32 encryptedSz = sizeof(encrypted);
+//
+//
+//  SECURE_rsa_encrypt(plaintext, sizeof(plaintext), encrypted, &encryptedSz);
+//  send_message("Ciphertext:\r\n");
+//  for (size_t i = 0; i < sizeof(encrypted); i++) {
+//  	  // sending as printable characters
+//  	  char hex_str[3];
+//  	  sprintf(hex_str, "%02X", encrypted[i]);
+//  	  send_message(hex_str);
+//   }
+//  send_message("\r\n");
+//
+//  /* --- TESTING RSA DECRYPTION --- */
+//  byte decrypted[256];
+//  word32 decryptedSz = sizeof(decrypted);
+//  SECURE_rsa_decrypt(encrypted, encryptedSz, decrypted, &decryptedSz);
+//  send_message("Plaintext:\r\n");
+//
+//  send_message((char *) decrypted);
+//  send_message("\r\n");
 
   /* USER CODE END 2 */
 
