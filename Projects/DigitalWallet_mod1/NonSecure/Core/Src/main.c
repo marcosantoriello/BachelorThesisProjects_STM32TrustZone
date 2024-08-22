@@ -47,16 +47,16 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 uint8_t rx_buffer[1];
-uint8_t input_buffer[64];
+uint8_t input_buffer[1024];
 uint8_t input_index = 0;
 byte publicKeyDer[4096];
 uint32_t publicKeyDerSz;
 int encrypt = 0;
 int decrypt = 0;
 
-byte encrypted[256];
+byte encrypted[1024];
 word32 encryptedSz = sizeof(encrypted);
-byte decrypted[256];
+byte decrypted[1024];
 word32 decryptedSz = sizeof(decrypted);
 
 unsigned char edPubKey[ED25519_PUB_KEY_SIZE];
@@ -132,12 +132,8 @@ void process_command(const char *buffer) {
 		SECURE_rsa_encrypt((byte *)buffer, sizeof(buffer), encrypted, &encryptedSz);
 		encrypt = 0;
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
-		for (size_t i = 0; i < sizeof(encrypted); i++) {
-		  	char hex_str[3];
-		  	sprintf(hex_str, "%02X", encrypted[i]);
-		  	printf(hex_str);
-		}
-		printf("\r\n");
+		print_hex(encrypted, encryptedSz);
+
 	} /* --- RSA DECRYPTION --- */
 	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
 			&& decrypt == 1) {
@@ -196,6 +192,9 @@ int main(void)
   MX_RTC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
+
+
   	printf("Welcome!");
 	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
@@ -208,6 +207,10 @@ int main(void)
 	printf("Here it is the ED25519 public key:\r\n");
 	SECURE_get_ed25519_pk(edPubKey, &edPubKeySz);
 	print_hex(edPubKey, edPubKeySz);
+
+	printf("-Type Encrypt to encrypt your data\r\n");
+	printf("-Type Decrypt to decrypt your data\r\n");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
