@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,6 +35,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define ED25519_PUB_KEY_SIZE 32 /* Compressed */
+#define MAX_INPUT_SIZE 1024
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,6 +63,9 @@ word32 decryptedSz = sizeof(decrypted);
 
 unsigned char edPubKey[ED25519_PUB_KEY_SIZE];
 uint32_t edPubKeySz;
+
+char complete_buffer[MAX_INPUT_SIZE] = {0};
+int dec_message_part_index = 0; /* indicates the current part of the message to decrypt  */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,6 +75,8 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void print_hex(const unsigned char* data, size_t len);
 void process_command(const char *buffer);
+int is_input_complete(const char *input);
+int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_array_len);
 
 
 /* Retargets the C library printf function to the USART. */
@@ -118,48 +125,96 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 void process_command(const char *buffer) {
-	char *msg;
+	char to_decrypt[512] = {0};
+
 	if (strcmp(buffer, "Encrypt") == 0) {
 		encrypt = 1;
 		printf("Insert the text to encrypt:\r\n");
+		memset(complete_buffer, 0, sizeof(complete_buffer));
+		dec_message_part_index = 0;
 	} else if (strcmp(buffer, "Decrypt") == 0) {
 		decrypt = 1;
 		printf("Insert the text to decrypt:\r\n");
+		memset(complete_buffer, 0, sizeof(complete_buffer));
+		dec_message_part_index = 0;
+
 	} /* --- RSA ENCRYPTION --- */
-	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
-			&& encrypt == 1) {
+	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0) && encrypt == 1) {
 		memset(encrypted, 0, sizeof(encrypted)); // resetting enc buffer before encrypting
 		SECURE_rsa_encrypt((byte *)buffer, sizeof(buffer), encrypted, &encryptedSz);
 		encrypt = 0;
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
 		print_hex(encrypted, encryptedSz);
-
-	} /* --- RSA DECRYPTION --- */
-	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0)
-			&& decrypt == 1) {
-		memset(decrypted, 0, sizeof(decrypted)); // resetting dec buffer before encrypting
-		SECURE_rsa_decrypt((byte *)buffer, sizeof(buffer), decrypted, &decryptedSz);
-		printf("Decrypted text:\r\n");
-		printf("%s", decrypted);
 	}
-	else {
-		msg ="Command unknown\n\r";
+	/* --- RSA DECRYPTION --- */
+	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0) && decrypt == 1) {
+		strcat(complete_buffer, buffer);
+
+		if (dec_message_part_index < 2) {
+			dec_message_part_index++;
+			printf("Insert the next part of the text to decrypt:\r\n");
+		} else {
+//			strncat(to_decrypt, complete_buffer, sizeof(to_decrypt));
+			unsigned char encrypted_data[256];
+			int ret = hex_to_bytes(complete_buffer, encrypted_data, sizeof(encrypted_data));
+			if (ret == 0) {
+				memset(decrypted, 0, sizeof(decrypted));  // Resetting buffer
+				SECURE_rsa_decrypt(encrypted_data, sizeof(encrypted_data),
+						decrypted, &decryptedSz);
+				printf("Decrypted text:\r\n");
+				printf("%s\r\n", decrypted);
+				decrypt = 0;  // Resetting decryption flag
+			} else {
+				printf("Invalid hex string!\r\n");
+			}
+
+//			memset(decrypted, 0, sizeof(decrypted)); // resetting dec buffer before encrypting
+//			SECURE_rsa_decrypt((byte *)complete_buffer, strlen(complete_buffer), decrypted, &decryptedSz);
+//			printf("Decrypted text:\r\n");
+//			printf("%s\r\n", decrypted);
+//			decrypt = 0;
+		}
+	} else {
 		encrypt = 0;
 		decrypt = 0;
-		HAL_UART_Transmit_IT(&huart1, (uint8_t *)msg, strlen(msg));
+		printf("Command unknown\r\n");
 	}
+}
+
+
+/*--- UTILITY ---*/
+int is_input_complete(const char *input) {
+	return (strlen(input) >= 300);
 }
 
 void print_hex(const unsigned char* data, size_t len) {
     for (size_t i = 0; i < len; i++) {
-//    	if (data[i] == '\0') {
-//    		break;
-//    	}
         printf("%02x", data[i]);
     }
     printf("\r\n");
 }
 
+int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_array_len) {
+    size_t hex_len = strlen(hex_str);
+    if (hex_len % 2 != 0) {
+        return -1;
+    }
+
+    if (hex_len / 2 > byte_array_len) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < hex_len; i += 2) {
+        if (!isxdigit(hex_str[i]) || !isxdigit(hex_str[i + 1])) {
+            return -1;
+        }
+
+        char byte_str[3] = { hex_str[i], hex_str[i + 1], '\0' };
+        byte_array[i / 2] = (unsigned char)strtol(byte_str, NULL, 16);
+    }
+
+    return 0;
+}
 
 /* USER CODE END 0 */
 
@@ -195,7 +250,7 @@ int main(void)
 	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
 
-  	printf("Welcome!");
+  	printf("Welcome!\r\n");
 	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
 	/* --- RETRIEVING RSA PUBLIC KEY --- */
