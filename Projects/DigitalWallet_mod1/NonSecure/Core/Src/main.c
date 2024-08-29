@@ -56,9 +56,10 @@ uint32_t publicKeyDerSz;
 int encrypt = 0;
 int decrypt = 0;
 
-byte encrypted[1024];
+word32 inputSz = 0;
+byte encrypted[256];
 word32 encryptedSz = sizeof(encrypted);
-byte decrypted[1024];
+byte decrypted[384];
 word32 decryptedSz = sizeof(decrypted);
 
 unsigned char edPubKey[ED25519_PUB_KEY_SIZE];
@@ -141,10 +142,12 @@ void process_command(const char *buffer) {
 	} /* --- RSA ENCRYPTION --- */
 	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0) && encrypt == 1) {
 		memset(encrypted, 0, sizeof(encrypted)); // resetting enc buffer before encrypting
-		SECURE_rsa_encrypt((byte *)buffer, sizeof(buffer), encrypted, &encryptedSz);
+		inputSz = strlen(buffer);
+		SECURE_rsa_encrypt((byte *)buffer, inputSz, encrypted, &encryptedSz);
 		encrypt = 0;
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
 		print_hex(encrypted, encryptedSz);
+		inputSz = 0;
 	}
 	/* --- RSA DECRYPTION --- */
 	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0) && decrypt == 1) {
@@ -154,7 +157,6 @@ void process_command(const char *buffer) {
 			dec_message_part_index++;
 			printf("Insert the next part of the text to decrypt:\r\n");
 		} else {
-//			strncat(to_decrypt, complete_buffer, sizeof(to_decrypt));
 			unsigned char encrypted_data[256];
 			int ret = hex_to_bytes(complete_buffer, encrypted_data, sizeof(encrypted_data));
 			if (ret == 0) {
@@ -167,12 +169,6 @@ void process_command(const char *buffer) {
 			} else {
 				printf("Invalid hex string!\r\n");
 			}
-
-//			memset(decrypted, 0, sizeof(decrypted)); // resetting dec buffer before encrypting
-//			SECURE_rsa_decrypt((byte *)complete_buffer, strlen(complete_buffer), decrypted, &decryptedSz);
-//			printf("Decrypted text:\r\n");
-//			printf("%s\r\n", decrypted);
-//			decrypt = 0;
 		}
 	} else {
 		encrypt = 0;

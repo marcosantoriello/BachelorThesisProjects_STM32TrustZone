@@ -235,6 +235,7 @@ int init_rng() {
 	}
 	return to_return;
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -280,6 +281,7 @@ int main(void)
   MX_RTC_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
+//  rsa_enc_dec_example();
   wolfCrypt_Init();
   init_rng();
   generate_ed25519_key();
