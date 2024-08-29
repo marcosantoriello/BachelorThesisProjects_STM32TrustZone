@@ -280,6 +280,7 @@ int main(void)
   MX_RTC_Init();
   MX_RNG_Init();
   /* USER CODE BEGIN 2 */
+  wolfCrypt_Init();
   init_rng();
   generate_ed25519_key();
   generate_rsa_key();

@@ -42,9 +42,7 @@ void *pSecureErrorCallback = NULL;   /* Pointer to secure error callback in Non-
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern byte publicKeyDer[4096];
-extern byte privateKeyDer[4096];
 extern word32 publicKeyDerSz;
-extern word32 privateKeyDerSz;
 extern byte plaintext[256];
 extern byte ciphertext[256];
 extern unsigned char edPubKey[32];
