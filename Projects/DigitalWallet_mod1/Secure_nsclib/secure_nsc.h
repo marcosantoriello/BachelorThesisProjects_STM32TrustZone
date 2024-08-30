@@ -64,6 +64,8 @@ void SECURE_get_rsa_pk(byte *out_public_key, uint32_t *out_key_size);
 void SECURE_rsa_encrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 void SECURE_rsa_decrypt(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 void SECURE_get_ed25519_pk(byte *out_public_key, uint32_t *out_key_size);
+void SECURE_generate_rsa_keys(void);
+void SECURE_generate_ed25519_keys(void);
 
 #endif /* SECURE_NSC_H */
 /* USER CODE END Non_Secure_CallLib_h */

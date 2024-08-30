@@ -67,6 +67,9 @@ uint32_t edPubKeySz;
 
 char complete_buffer[MAX_INPUT_SIZE] = {0};
 int dec_message_part_index = 0; /* indicates the current part of the message to decrypt  */
+
+TIM_HandleTypeDef htim2;
+uint32_t start_time, end_time, elapsed_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,7 +81,8 @@ void print_hex(const unsigned char* data, size_t len);
 void process_command(const char *buffer);
 int is_input_complete(const char *input);
 int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_array_len);
-
+uint32_t micros(void);
+void TIM2_Init(void);
 
 /* Retargets the C library printf function to the USART. */
 #include <stdio.h>
@@ -142,10 +146,14 @@ void process_command(const char *buffer) {
 	else if ((strcmp(buffer, "Encrypt") != 0 && strcmp(buffer, "Decrypt") != 0) && encrypt == 1) {
 		memset(encrypted, 0, sizeof(encrypted)); // resetting enc buffer before encrypting
 		inputSz = strlen(buffer);
+		start_time = micros();
 		SECURE_rsa_encrypt((byte *)buffer, inputSz, encrypted, &encryptedSz);
+		end_time = micros();
+		elapsed_time = end_time - start_time;
 		encrypt = 0;
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
 		print_hex(encrypted, encryptedSz);
+		printf("Elapsed time: %lu ms\r\n", elapsed_time);
 		printf("\r\n");
 		inputSz = 0;
 	}
@@ -161,10 +169,14 @@ void process_command(const char *buffer) {
 			int ret = hex_to_bytes(complete_buffer, encrypted_data, sizeof(encrypted_data));
 			if (ret == 0) {
 				memset(decrypted, 0, sizeof(decrypted));  // Resetting buffer
+				start_time = micros();
 				SECURE_rsa_decrypt(encrypted_data, sizeof(encrypted_data),
 						decrypted, &decryptedSz);
+				end_time = micros();
+				elapsed_time = end_time - start_time;
 				printf("Decrypted text:\r\n");
 				printf("%s\r\n", decrypted);
+				printf("Elapsed time: %lu ms\r\n", elapsed_time);
 				decrypt = 0;  // Resetting decryption flag
 			} else {
 				printf("Invalid hex string!\r\n");
@@ -213,6 +225,24 @@ int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_arr
     return 0;
 }
 
+void TIM2_Init(void) {
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = (HAL_RCC_GetPCLK1Freq() / 1000000) - 1;  // Setting for microseconds
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = 0xFFFFFFFF;
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+
+    HAL_TIM_Base_Init(&htim2);
+    HAL_TIM_Base_Start(&htim2);
+}
+
+
+uint32_t micros(void) {
+    return __HAL_TIM_GET_COUNTER(&htim2);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -232,7 +262,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  TIM2_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN SysInit */
@@ -244,14 +274,32 @@ int main(void)
   MX_RTC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
 	printf("Welcome!\r\n");
+	printf("\r\n");
+
+	/* --- GENERATING RSA KEYS --- */
+	printf("Generating RSA keys...\r\n");
+	start_time = micros();
+	SECURE_generate_rsa_keys();
+	end_time = micros();
+	elapsed_time = end_time - start_time;
+	printf("Elapsed time: %lu ms\r\n", elapsed_time);
+
 
 	/* --- RETRIEVING RSA PUBLIC KEY --- */
 	printf("\r\nRSA public key:\r\n");
 	SECURE_get_rsa_pk(publicKeyDer, &publicKeyDerSz);
 	print_hex(publicKeyDer, publicKeyDerSz);
+	printf("\r\n");
+
+	/* --- GENERATING ED25519 KEYS --- */
+	printf("Generating ED25519 keys...\r\n");
+	start_time = micros();
+	SECURE_generate_ed25519_keys();
+	end_time = micros();
+	elapsed_time = end_time - start_time;
+	printf("Elapsed time: %lu ms\r\n", elapsed_time);
 
 	/* --- RETRIEVING ED25519 PUBLIC KEY --- */
 	printf("\r\nED25519 public key:\r\n");
@@ -260,7 +308,7 @@ int main(void)
 	printf("\r\n");
 	printf("-Type Encrypt to encrypt your data\r\n");
 	printf("-Type Decrypt to decrypt your data\r\n");
-
+	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
   /* USER CODE END 2 */
 
   /* Infinite loop */

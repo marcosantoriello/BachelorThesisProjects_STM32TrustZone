@@ -93,6 +93,14 @@ CMSE_NS_ENTRY void SECURE_get_ed25519_pk(byte *out_public_key, uint32_t *out_key
 	*out_key_size = edPubKeySz;
 }
 
+CMSE_NS_ENTRY void SECURE_generate_rsa_keys(void) {
+	generate_rsa_key();
+}
+
+CMSE_NS_ENTRY void SECURE_generate_ed25519_keys(void) {
+	generate_ed25519_key();
+}
+
 /**
   * @}
   */

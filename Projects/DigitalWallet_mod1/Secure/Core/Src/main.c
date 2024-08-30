@@ -283,8 +283,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   wolfCrypt_Init();
   init_rng();
-  generate_ed25519_key();
-  generate_rsa_key();
   /* USER CODE END 2 */
 
   /*************** Setup and jump to non-secure *******************************/
