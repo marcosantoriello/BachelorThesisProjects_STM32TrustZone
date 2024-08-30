@@ -158,7 +158,7 @@ int generate_ed25519_key() {
 
 	printf("ED25519 Key Pair generated successfully.\r\n");
 
-	/* RELASING RESOURCES */
+	/* RELEASING RESOURCES */
 	wc_ed25519_free(&ed25519Key);
 
 	return 0;
@@ -194,7 +194,7 @@ int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
 
 	*outputSz = ret;
 
-	/* RELASING RESOURCES */
+	/* RELEASING RESOURCES */
 	wc_FreeRsaKey(&publicKey);
 
 	return ret;
@@ -230,7 +230,7 @@ int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
 	}
 
 	*outputSz = ret;
-	/* RELASING RESOURCES */
+	/* RELEASING RESOURCES */
 	wc_FreeRsaKey(&privateKey);
 
 	return ret;

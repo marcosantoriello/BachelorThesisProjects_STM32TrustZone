@@ -126,7 +126,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 void process_command(const char *buffer) {
-	char to_decrypt[512] = {0};
 
 	if (strcmp(buffer, "Encrypt") == 0) {
 		encrypt = 1;
@@ -147,6 +146,7 @@ void process_command(const char *buffer) {
 		encrypt = 0;
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
 		print_hex(encrypted, encryptedSz);
+		printf("\r\n");
 		inputSz = 0;
 	}
 	/* --- RSA DECRYPTION --- */
@@ -168,6 +168,7 @@ void process_command(const char *buffer) {
 				decrypt = 0;  // Resetting decryption flag
 			} else {
 				printf("Invalid hex string!\r\n");
+				printf("\r\n");
 			}
 		}
 	} else {
@@ -245,20 +246,18 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
 
-
-  	printf("Welcome!\r\n");
-	HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
+	printf("Welcome!\r\n");
 
 	/* --- RETRIEVING RSA PUBLIC KEY --- */
-	printf("Here it is the RSA public key:\r\n");
+	printf("\r\nRSA public key:\r\n");
 	SECURE_get_rsa_pk(publicKeyDer, &publicKeyDerSz);
 	print_hex(publicKeyDer, publicKeyDerSz);
 
 	/* --- RETRIEVING ED25519 PUBLIC KEY --- */
-	printf("Here it is the ED25519 public key:\r\n");
+	printf("\r\nED25519 public key:\r\n");
 	SECURE_get_ed25519_pk(edPubKey, &edPubKeySz);
 	print_hex(edPubKey, edPubKeySz);
-
+	printf("\r\n");
 	printf("-Type Encrypt to encrypt your data\r\n");
 	printf("-Type Decrypt to decrypt your data\r\n");
 
