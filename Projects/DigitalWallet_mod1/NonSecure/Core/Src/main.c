@@ -154,7 +154,6 @@ void process_command(const char *buffer) {
 		printf("Successfully encrypted your data!\r\nCiphertext:\r\n");
 		print_hex(encrypted, encryptedSz);
 		printf("Elapsed time: %lu ms\r\n", elapsed_time);
-		printf("\r\n");
 		inputSz = 0;
 	}
 	/* --- RSA DECRYPTION --- */
@@ -180,7 +179,6 @@ void process_command(const char *buffer) {
 				decrypt = 0;  // Resetting decryption flag
 			} else {
 				printf("Invalid hex string!\r\n");
-				printf("\r\n");
 			}
 		}
 	} else {
@@ -275,9 +273,6 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-	printf("Welcome!\r\n");
-	printf("\r\n");
-
 	/* --- GENERATING RSA KEYS --- */
 	printf("Generating RSA keys...\r\n");
 	start_time = micros();
@@ -291,7 +286,6 @@ int main(void)
 	printf("\r\nRSA public key:\r\n");
 	SECURE_get_rsa_pk(publicKeyDer, &publicKeyDerSz);
 	print_hex(publicKeyDer, publicKeyDerSz);
-	printf("\r\n");
 
 	/* --- GENERATING ED25519 KEYS --- */
 	printf("Generating ED25519 keys...\r\n");
