@@ -50,6 +50,10 @@
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+uint8_t rx_buffer[1];
+uint8_t input_buffer[64];
+uint8_t input_index = 0;
+HAL_StatusTypeDef usart_status_code;
 
 byte publicKeyDer[4096];
 uint32_t publicKeyDerSz;
@@ -64,8 +68,6 @@ uint8_t signature[SIGNATURE_SIZE];
 volatile uint8_t challengeReceived;
 int sigLen;
 
-// TO DELETE
-uint8_t UART1_rxBuffer[12] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,7 +78,7 @@ static void MX_USART1_UART_Init(void);
 
 void print_hex(const unsigned char* data, size_t len);
 int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_array_len);
-
+void process_command(const char *buffer);
 /*********************************** FOR PRINTF ************************************************/
 /* Retargets the C library printf function to the USART. */
 #include <stdio.h>
@@ -138,6 +140,22 @@ int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_arr
 }
 
 /************************************ USART FUNCITONS ********************************************/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+	  if (rx_buffer[0] =='\r') {
+		  input_buffer[input_index] = '\0';
+		  process_command((char *)input_buffer);
+
+		  // Resetting input buffer...
+		  memset(input_buffer, 0, sizeof(input_buffer));
+		  input_index = 0;
+	  } else {
+		  input_buffer[input_index++] = rx_buffer[0];
+	  }
+	  usart_status_code = HAL_UART_Receive_IT(&huart1, rx_buffer, sizeof(rx_buffer));
+  }
+}
 //void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 //    if (huart->Instance == USART1) {
 //        // Setta il flag per indicare che la challenge è stata ricevuta
@@ -158,10 +176,16 @@ int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_arr
 //    }
 //}
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    HAL_UART_Transmit(&huart1, UART1_rxBuffer, 12, 100);
-    HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 12);
+void process_command(const char *buffer) {
+	challengeReceived = 1;
+	if (challengeReceived) {
+		printf("[+] Challenge received\r\n");
+		challengeReceived = 0; // resetting the flag
+
+		printf("[*] Signing the challenge...\r\n");
+		SECURE_rsa_sign((byte *) buffer, strlen((char *) buffer), (byte *) signature, &sigLen);
+		printf("[+] Done.\r\n");
+	}
 }
 
 
@@ -210,8 +234,7 @@ int main(void)
 	print_hex(publicKeyDer, publicKeyDerSz);
 
 	printf("[*] Waiting for a challenge...\r\n");
-//	HAL_UART_Receive_IT(&huart1, challenge, CHALLENGE_SIZE);
-	HAL_UART_Receive_IT (&huart1, UART1_rxBuffer, 12);
+	HAL_UART_Receive_IT(&huart1, (uint8_t*)rx_buffer, sizeof(rx_buffer));
   /* USER CODE END 2 */
 
   /* Infinite loop */
