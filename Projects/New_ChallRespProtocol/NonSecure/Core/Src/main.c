@@ -207,12 +207,10 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  if (challenge_received) {
-		  // TO-DO: Add RSA signature logic
 		  signature_len = sizeof(signature);
 
 		  SECURE_rsa_sign(rx_buffer, strlen((char *)rx_buffer), signature, &signature_len);
 
-//		  uint8_t response[] = "OK";  // Placeholder per la firma
 		  HAL_UART_Transmit(&huart1, signature, signature_len, HAL_MAX_DELAY);
 
 		  challenge_received = 0;

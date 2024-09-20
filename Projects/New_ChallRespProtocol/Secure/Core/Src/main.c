@@ -29,6 +29,8 @@
 #include "wolfssl/wolfcrypt/sha256.h"
 #include "wolfssl/wolfcrypt/random.h"
 #include "wolfssl/wolfcrypt/error-crypt.h"
+#include "wolfssl/wolfcrypt/asn.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,12 +40,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-RsaKey rsaKey;
-byte publicKeyDer[4096];
-byte privateKeyDer[4096];
-word32 publicKeyDerSz;
-word32 privateKeyDerSz;
-WC_RNG rng;
+
+/* Signature size is the length of the modulus of the RSA key */
+#define SIG_SZ              (2048 / 8)
+/* Maximum bound on digest algorithm encoding around digest */
+#define MAX_ENC_ALG_SZ      32
+
+
 /* Non-secure Vector table to jump to (internal Flash Bank2 here)             */
 /* Caution: address must correspond to non-secure internal Flash where is     */
 /*          mapped in the non-secure vector table                             */
@@ -66,6 +69,13 @@ RTC_HandleTypeDef hrtc;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
+
+RsaKey rsaKey;
+byte publicKeyDer[4096];
+byte privateKeyDer[4096];
+word32 publicKeyDerSz;
+word32 privateKeyDerSz;
+WC_RNG rng;
 
 /* USER CODE END PV */
 
@@ -94,21 +104,71 @@ int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 /* USER CODE BEGIN 0 */
 
 int rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz) {
-	int ret;
-	byte hash[WC_SHA256_DIGEST_SIZE];  // Buffer per memorizzare l'hash SHA-256
+	int 			ret;
+	Sha256 			sha256;
+	Sha256 			*pSha256 = NULL;
+	unsigned char 	digest[WC_SHA256_DIGEST_SIZE];
+	unsigned char 	encSig[WC_SHA256_DIGEST_SIZE + MAX_ENC_ALG_SZ];
+	unsigned char signature[SIG_SZ];
+	word32 			sigLen;
+	word32 			encSigLen;
+	RsaKey 			privateKey;
+	RsaKey* 		pRsaKey = NULL;
+	WC_RNG*			pRng = NULL;
+	word32			idx;
 
-	// Calcolo dell'hash SHA-256 della challenge
-	ret = wc_Sha256Hash(input, inputSz, hash);
+	/* Calculate SHA-256 message digest */
+	ret = wc_InitSha256(&sha256);
+	if (ret == 0) {
+		pSha256 = &sha256;
+		ret = wc_Sha256Update(&sha256, input, inputSz);
+	}
+	if (ret == 0) {
+		ret = wc_Sha256Final(&sha256, digest);
+	}
+
+	/* Encode digest for PKCS#1.5 */
+	if (ret == 0) {
+		encSigLen = wc_EncodeSignature(encSig, digest, sizeof(digest), SHA256h);
+		if ((int) encSigLen < 0) {
+			ret = (int) encSigLen;
+		}
+	}
+
+	pRsaKey = &rsaKey;
+	pRng = &rng;
+
+	idx = 0;
+	/* INITIALIZING RSA PRIVATE KEY */
+	wc_InitRsaKey(&privateKey, NULL);
+
+	/* DECODING PUBLIC KEY */
+	ret = wc_RsaPrivateKeyDecode(privateKeyDer, &idx, &privateKey,
+			privateKeyDerSz);
 	if (ret != 0) {
 		return ret;
 	}
 
-//	ret = wc_RsaSSL_Sign(input, inputSz, output, *outputSz, &rsaKey, &rng);
-	ret = wc_RsaSSL_Sign(hash, WC_SHA256_DIGEST_SIZE, output, *outputSz, &rsaKey, &rng);
-	if (ret < 0) {
-		ret = -1;
+	ret = wc_RsaSSL_Sign(encSig, encSigLen, signature, sizeof(signature), &rsaKey, pRng);
+	if (ret >= 0) {
+		sigLen = ret;
+		ret = 0;
+		XMEMCPY(output, signature, sigLen);
 	}
+
+	/* Free data structures */
+	if (pRng != NULL) {
+		wc_FreeRng(pRng);
+	}
+	if (pRsaKey != NULL) {
+		wc_FreeRsaKey(pRsaKey);
+	}
+	if (pSha256 != NULL) {
+		wc_Sha256Free(pSha256);
+	}
+
 	return ret;
+
 }
 
 int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz) {
