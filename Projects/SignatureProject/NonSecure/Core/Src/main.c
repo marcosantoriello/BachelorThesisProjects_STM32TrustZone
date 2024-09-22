@@ -255,14 +255,18 @@ int main(void)
 	  if (signature_received) {
 		  signature_len = sizeof(signature);
 
-		  SECURE_rsa_verify_signature(challenge, strlen(challenge), rx_buffer, &verification_status);
-		  if (verification_status) {
-			  printf("Signature verified\n\r");
-		  } else {
-			  printf("Failure\r\n");
-		  }
-		  signature_received = 0;
-		  auth_request_received = 0;
+			if (rx_length == 256) {
+				SECURE_rsa_verify_signature(challenge, strlen(challenge),
+						rx_buffer, &verification_status);
+				if (verification_status) {
+					printf("Signature verified\n\r");
+				} else {
+					printf("Failure\r\n");
+				}
+				signature_received = 0;
+				auth_request_received = 0;
+			}
+
 		  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
 	  }
     /* USER CODE BEGIN 3 */

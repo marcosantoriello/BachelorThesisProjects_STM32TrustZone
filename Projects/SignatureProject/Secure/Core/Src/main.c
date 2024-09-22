@@ -42,6 +42,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define SIGNATURE_SIZE 256
+
 /* Signature size is the length of the modulus of the RSA key */
 #define SIG_SZ              (2048 / 8)
 /* Maximum bound on digest algorithm encoding around digest */
@@ -264,7 +266,7 @@ int rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_
 	        ret = wc_InitSha256(&sha256);
 	    if (ret == 0) {
 	        pSha256 = &sha256;
-	        ret = wc_Sha256Update(&sha256, input, sizeof(input));
+	        ret = wc_Sha256Update(&sha256, input, inputSz);
 	    }
 	    if (ret == 0)
 	        ret = wc_Sha256Final(&sha256, digest);
@@ -289,7 +291,7 @@ int rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_
 
 	    /* Verify the signature by decrypting the value. */
 	    if (ret == 0) {
-	        decSigLen = wc_RsaSSL_VerifyInline(rsa_sig_2048, sizeof(rsa_sig_2048),
+	        decSigLen = wc_RsaSSL_VerifyInline(rsa_sig_2048, SIGNATURE_SIZE,
 	                                           &decSig, &rsaKey);
 	        if ((int)decSigLen < 0)
 	            ret = (int)decSigLen;
@@ -302,9 +304,9 @@ int rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_
 
 	    /* Report on the verification */
 	    if (ret == 0)
-	        fprintf(stderr, "Verified\n");
+	        *status = 1;
 	    else
-	        fprintf(stderr, "Failure\n");
+	        *status = 0;
 
 	    /* Free the data structures */
 	    if (pRsaKey != NULL)
