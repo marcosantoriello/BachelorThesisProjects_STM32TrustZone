@@ -41,8 +41,6 @@ void *pSecureErrorCallback = NULL;   /* Pointer to secure error callback in Non-
 
 extern byte publicKeyDer[4096];
 extern word32 publicKeyDerSz;
-extern byte plaintext[256];
-extern byte ciphertext[256];
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/

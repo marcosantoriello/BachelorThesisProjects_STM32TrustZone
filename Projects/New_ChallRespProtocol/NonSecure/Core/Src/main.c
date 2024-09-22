@@ -73,7 +73,7 @@ static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-void process_command(const char *buffer);
+
 void print_hex(const unsigned char* data, size_t len);
 int hex_to_bytes(const char* hex_str, unsigned char* byte_array, size_t byte_array_len);
 
@@ -193,7 +193,7 @@ int main(void)
   SECURE_generate_rsa_keys();
 
   /* --- RETRIEVING RSA PUBLIC KEY --- */
-  printf("\r\n[*] RSA public key:\r\n");
+  printf("\r\n[+] RSA public key:\r\n");
   SECURE_get_rsa_pk(publicKeyDer, &publicKeyDerSz);
   print_hex(publicKeyDer, publicKeyDerSz);
 

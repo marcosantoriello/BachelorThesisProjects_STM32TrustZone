@@ -95,6 +95,7 @@ static void MX_RTC_Init(void);
 
 int init_rng();
 int generate_rsa_key();
+int rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 
