@@ -93,6 +93,10 @@ CMSE_NS_ENTRY void SECURE_rsa_verify_signature(byte *input, word32 inputSz, byte
 	rsa_verify_signature(input, inputSz, rsa_sig_2048, status);
 }
 
+CMSE_NS_ENTRY void SECURE_get_enc_secret_token(byte *out_token) {
+	generate_token(out_token);
+}
+
 
 /**
   * @}

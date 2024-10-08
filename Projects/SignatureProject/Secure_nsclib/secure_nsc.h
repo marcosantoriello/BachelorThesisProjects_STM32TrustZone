@@ -65,6 +65,7 @@ void SECURE_rsa_decrypt(byte *input, word32 inputSz, byte *output, word32 *outpu
 void SECURE_generate_rsa_keys(void);
 void SECURE_rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 void SECURE_rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_t *status);
+void SECURE_get_enc_secret_token(byte *out_token);
 #endif /* SECURE_NSC_H */
 /* USER CODE END Non_Secure_CallLib_h */
 

@@ -70,6 +70,7 @@ word32 decryptedSz = sizeof(decrypted);
 uint8_t signature[256];
 word32 signature_len;
 char *challenge = "bOIBgdzTHZN3SlElS2ISu0Sn6oipMBvtLQZYaKoz24bdO4rLmbd5bfYDQnNYbFOfZ5XyCnDc5JebFkOALKihpKloQsH84ualOzNjsBBKXFu5JvCoeqCcZnZaHeT5hJxcWVXRvi08B06eQl3FbXvTrH3JqcGePLEC17QivhSQ3K9VOwePMFMl4sYuc8K3hZ4LyuIZJKCfFelxEOEmYLtxve4F7Yd3juOQ0cvmIRbPUcLAmac38ubCMtDeRRLdRh1B";
+byte secret_token[256];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -245,6 +246,11 @@ int main(void)
 						rx_buffer, &verification_status);
 				if (verification_status) {
 					printf("Signature verified\n\r");
+					SECURE_get_enc_secret_token(&secret_token);
+					HAL_Delay(1000);
+					HAL_UART_Transmit(&huart1, secret_token, strlen(secret_token),
+										HAL_MAX_DELAY);
+
 				} else {
 					printf("Failure\r\n");
 				}

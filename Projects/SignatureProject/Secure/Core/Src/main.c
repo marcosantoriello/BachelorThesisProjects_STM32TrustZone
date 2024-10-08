@@ -95,10 +95,14 @@ static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 int init_rng();
+void InitRandom();
 int generate_rsa_key();
 int rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
+void GenerateRandomString(byte *output, uint16_t length);
+int generate_token(byte *output);
+
 
 
 /* USER CODE END PFP */
@@ -335,6 +339,16 @@ int generate_rsa_key() {
 	 return ret;
 }
 
+int generate_token(byte *output) {
+	byte token[32];
+	GenerateRandomString(token, 32);
+	word32 outputSz;
+
+	int ret = rsa_encrypt(token, strlen(token), output, &outputSz);
+
+	return ret;
+}
+
 int init_rng() {
 	int to_return;
 	to_return = wc_InitRng(&rng);
@@ -343,6 +357,20 @@ int init_rng() {
 	}
 	return to_return;
 }
+
+void InitRandom() {
+	srand((unsigned int) HAL_GetTick());
+}
+
+void GenerateRandomString(byte *output, uint16_t length) {
+	const char validChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	for (uint32_t i; i < length; i++) {
+		output[i] = validChars[rand() % (sizeof(validChars) - 1)];
+	}
+	output[length] = '\0';
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -391,6 +419,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   wolfCrypt_Init();
   init_rng();
+  InitRandom();
+  generate_rsa_key();
   /* USER CODE END 2 */
 
   /*************** Setup and jump to non-secure *******************************/
