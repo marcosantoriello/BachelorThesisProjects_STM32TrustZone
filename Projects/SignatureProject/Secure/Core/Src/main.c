@@ -78,7 +78,6 @@ byte privateKeyDer[4096];
 word32 publicKeyDerSz;
 word32 privateKeyDerSz;
 WC_RNG rng;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,6 +99,7 @@ int generate_rsa_key();
 int rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz);
 int rsa_encrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
 int rsa_decrypt(byte* input, word32 inputSz, byte* output, word32* outputSz);
+
 
 /* USER CODE END PFP */
 
@@ -173,80 +173,6 @@ int rsa_sign(byte *input, word32 inputSz, byte *output, word32 *outputSz) {
 	return ret;
 
 }
-
-//int rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_t *status) {
-//	int ret = 0;
-//	Sha256 sha256;
-//	Sha256 *pSha256 = NULL;
-//	RsaKey rsa_key;
-//	RsaKey *pRsaKey = NULL;
-//	word32 idx;
-//	unsigned char digest[WC_SHA256_DIGEST_SIZE];
-//	unsigned char encSig[WC_SHA256_DIGEST_SIZE + MAX_ENC_ALG_SZ];
-//	word32 encSigLen = 0;
-//	unsigned char *decSig = NULL;
-//	word32 decSigLen = 0;
-//
-//	/* Calculate SHA-256 message digest */
-//	ret = wc_InitSha256(&sha256);
-//	if (ret == 0) {
-//		pSha256 = &sha256;
-//		ret = wc_Sha256Update(&sha256, input, inputSz);
-//	}
-//	if (ret == 0) {
-//		ret = wc_Sha256Final(&sha256, digest);
-//	}
-//
-//	/* Encode digest for PKCS#1.5 */
-//	if (ret == 0) {
-//		encSigLen = wc_EncodeSignature(encSig, digest, sizeof(digest), SHA256h);
-//			ret = (int) encSigLen;
-//		}
-//
-//	pRsaKey = &rsa_key;
-//
-//	idx = 0;
-//	/* INITIALIZING RSA KEY */
-//	wc_InitRsaKey(&rsa_key, NULL);
-//
-//	/* DECODING PUBLIC KEY */
-//	ret = wc_RsaPublicKeyDecode(public_key_2048, &idx, &rsa_key,
-//			sizeof(public_key_2048));
-//	if (ret != 0) {
-//		return ret;
-//	}
-//
-//	/* Verify the signature by decrypting the value. */
-//	if (ret == 0) {
-//		decSigLen = wc_RsaSSL_VerifyInline(rsa_sig_2048, sizeof(rsa_sig_2048),
-//				&decSig, &rsa_key);
-//		if ((int) decSigLen < 0)
-//			ret = (int) decSigLen;
-//	}
-//
-//	if (ret == 0 && encSigLen != decSigLen) {
-//		ret = -1;
-//	}
-//	if (ret == 0 && XMEMCMP(encSig, decSig, encSigLen) != 0) {
-//		ret = -1;
-//	}
-//
-//	if (ret == 0) {
-//		XMEMCPY(status, 1, 1);
-//	} else {
-//		XMEMCPY(status, 0, 1);
-//	}
-//
-//	/* Free data structures */
-//	if (pRsaKey != NULL) {
-//		wc_FreeRsaKey(pRsaKey);
-//	}
-//	if (pSha256 != NULL) {
-//		wc_Sha256Free(pSha256);
-//	}
-//
-//	return ret;
-//}
 
 int rsa_verify_signature(byte *input, word32 inputSz, byte* rsa_sig_2048, uint8_t *status) {
 	int            ret = 0;

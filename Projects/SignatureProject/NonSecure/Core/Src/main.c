@@ -69,10 +69,7 @@ word32 decryptedSz = sizeof(decrypted);
 
 uint8_t signature[256];
 word32 signature_len;
-
 char *challenge = "bOIBgdzTHZN3SlElS2ISu0Sn6oipMBvtLQZYaKoz24bdO4rLmbd5bfYDQnNYbFOfZ5XyCnDc5JebFkOALKihpKloQsH84ualOzNjsBBKXFu5JvCoeqCcZnZaHeT5hJxcWVXRvi08B06eQl3FbXvTrH3JqcGePLEC17QivhSQ3K9VOwePMFMl4sYuc8K3hZ4LyuIZJKCfFelxEOEmYLtxve4F7Yd3juOQ0cvmIRbPUcLAmac38ubCMtDeRRLdRh1B";
-word32 challenge_len;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -222,29 +219,6 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-//  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
-//  /* --- GENERATING RSA KEYS --- */
-//    printf("[*] Generating RSA keys...\r\n");
-//    SECURE_generate_rsa_keys();
-//
-//    /* --- RETRIEVING RSA PUBLIC KEY --- */
-//    printf("\r\n[+] RSA public key:\r\n");
-//    SECURE_get_rsa_pk(publicKeyDer, &publicKeyDerSz);
-//    print_hex(publicKeyDer, publicKeyDerSz);
-//    challenge_len = sizeof(challenge);
-//    printf("[*] Sending the challenge...\r\n");
-
-//    HAL_Delay(6000);
-
-    printf("[*] Waiting for a client...\r\n");
-    HAL_UART_Receive_IT(&huart1, &rx_data, 1);
-    HAL_Delay(6000);
-
-    // sending the challenge
-    HAL_UART_Transmit(&huart1, challenge, strlen(challenge), HAL_MAX_DELAY);
-
-
-    HAL_UART_Receive_IT(&huart1, &rx_data, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -252,8 +226,19 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if (signature_received) {
-		  signature_len = sizeof(signature);
+
+		if (!signature_received) {
+			HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+			HAL_Delay(6000);
+
+			HAL_UART_Transmit(&huart1, challenge, strlen(challenge),
+					HAL_MAX_DELAY);
+
+			HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+		}
+
+		else {
+			signature_len = sizeof(signature);
 
 			if (rx_length == 256) {
 				SECURE_rsa_verify_signature(challenge, strlen(challenge),
@@ -267,8 +252,8 @@ int main(void)
 				auth_request_received = 0;
 			}
 
-		  HAL_UART_Receive_IT(&huart1, &rx_data, 1);
-	  }
+			HAL_UART_Receive_IT(&huart1, &rx_data, 1);
+		}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
